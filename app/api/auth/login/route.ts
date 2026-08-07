@@ -1,52 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
 
-export async function POST(request: NextRequest) {
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const body = await req.json();
+    const parsed = loginSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, data: null, message: '邮箱和密码不能为空', error: 'MISSING_FIELDS' },
+        { error: 'INVALID_INPUT', message: '邮箱或密码格式不正确', details: parsed.error.flatten() },
         { status: 400 }
-      )
+      );
     }
 
-    const supabase = await createClient()
+    const { email, password } = parsed.data;
+    const supabase = await createClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
       return NextResponse.json(
-        { success: false, data: null, message: '邮箱或密码错误', error: 'LOGIN_FAILED' },
+        { error: 'AUTH_FAILED', message: '邮箱或密码错误' },
         { status: 401 }
-      )
+      );
     }
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('id, role, display_name, target_audience, preferred_language')
-      .eq('id', data.user.id)
-      .single()
-
     return NextResponse.json({
-      success: true,
-      data: {
-        user_id: data.user.id,
+      user: {
+        id: data.user.id,
         email: data.user.email,
-        profile: userProfile,
       },
-      message: '登录成功',
-      error: null,
-    })
+      session: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at,
+      },
+    });
   } catch (err) {
+    console.error('login error:', err);
     return NextResponse.json(
-      { success: false, data: null, message: '服务器错误', error: 'INTERNAL_ERROR' },
+      { error: 'INTERNAL_ERROR', message: '服务器内部错误' },
       { status: 500 }
-    )
+    );
   }
 }
