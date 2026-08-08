@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: { user_id: data.user?.id, email: data.user?.email },
-      message: '注册成功，请查收验证邮件',
+      message: '注册成功',
       error: null,
     })
   } catch (err) {

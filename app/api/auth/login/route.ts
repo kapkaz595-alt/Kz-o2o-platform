@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'INVALID_INPUT', message: '邮箱或密码格式不正确', details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: 'AUTH_FAILED', message: '邮箱或密码错误' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -39,17 +39,12 @@ export async function POST(req: NextRequest) {
         id: data.user.id,
         email: data.user.email,
       },
-      session: {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_at: data.session.expires_at,
-      },
     });
   } catch (err) {
     console.error('login error:', err);
     return NextResponse.json(
       { error: 'INTERNAL_ERROR', message: '服务器内部错误' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

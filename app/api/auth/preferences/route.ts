@@ -3,55 +3,45 @@ import { createClient } from '@/lib/supabase/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { z } from 'zod';
 
-const updateProfileSchema = z.object({
-  display_name: z.string().min(1).max(100).optional(),
-  phone: z.string().optional(),
-  whatsapp_number: z.string().optional(),
+const preferencesSchema = z.object({
+  target_audience: z.enum(['chinese', 'local']).optional(),
   preferred_language: z.enum(['zh', 'ru', 'kk']).optional(),
-  avatar_url: z.string().url().optional(),
 });
 
 export const GET = withAuth(async (req, { user }) => {
   const supabase = await createClient();
 
-  const { data: profile, error } = await supabase
+  const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('target_audience, preferred_language')
     .eq('id', user.id)
     .single();
 
   if (error) {
-    console.error('GET /me error:', error, 'user.id:', user.id);
     return NextResponse.json(
-      { error: 'PROFILE_NOT_FOUND', message: '用户资料不存在' },
+      { error: 'PREFERENCES_NOT_FOUND', message: '偏好设置不存在' },
       { status: 404 },
     );
   }
 
-  return NextResponse.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      ...profile,
-    },
-  });
+  return NextResponse.json({ preferences: data });
 });
 
 export const PATCH = withAuth(async (req, { user }) => {
   try {
     const body = await req.json();
-    const parsed = updateProfileSchema.safeParse(body);
+    const parsed = preferencesSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'INVALID_INPUT', message: '输入格式不正确', details: parsed.error.flatten() },
+        { error: 'INVALID_INPUT', message: '偏好参数不正确', details: parsed.error.flatten() },
         { status: 400 },
       );
     }
 
     if (Object.keys(parsed.data).length === 0) {
       return NextResponse.json(
-        { error: 'NO_FIELDS', message: '未提供任何更新字段' },
+        { error: 'NO_FIELDS', message: '未提供任何偏好字段' },
         { status: 400 },
       );
     }
@@ -62,20 +52,19 @@ export const PATCH = withAuth(async (req, { user }) => {
       .from('users')
       .update(parsed.data)
       .eq('id', user.id)
-      .select()
+      .select('target_audience, preferred_language')
       .single();
 
     if (error) {
-  console.error('PATCH /me error:', error, 'user.id:', user.id);
-  return NextResponse.json(
-    { error: 'UPDATE_FAILED', message: '更新失败' },
-    { status: 500 },
-  );
-}
+      return NextResponse.json(
+        { error: 'UPDATE_FAILED', message: '偏好更新失败' },
+        { status: 500 },
+      );
+    }
 
-    return NextResponse.json({ user: { id: user.id, email: user.email, ...data } });
+    return NextResponse.json({ preferences: data });
   } catch (err) {
-    console.error('update profile error:', err);
+    console.error('update preferences error:', err);
     return NextResponse.json(
       { error: 'INTERNAL_ERROR', message: '服务器内部错误' },
       { status: 500 },
