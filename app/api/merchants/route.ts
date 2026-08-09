@@ -109,3 +109,35 @@ if (!slug) {
     );
   }
 });
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const supabase = createClient();
+
+  const page = parseInt(searchParams.get('page') ?? '1', 10);
+  const pageSize = Math.min(parseInt(searchParams.get('page_size') ?? '20', 10), 50);
+
+  const { data, error } = await supabase.rpc('list_merchants', {
+    p_category: searchParams.get('category'),
+    p_target_audience: searchParams.get('target_audience'),
+    p_keyword: searchParams.get('keyword'),
+    p_lat: searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null,
+    p_lng: searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null,
+    p_radius_meters: searchParams.get('radius') ? parseInt(searchParams.get('radius')!, 10) : 5000,
+    p_page: page,
+    p_page_size: pageSize,
+  });
+
+  if (error) {
+    console.error('[merchants/list] query error:', error);
+    return NextResponse.json({ error: 'internal server error' }, { status: 500 });
+  }
+
+  const total = data?.[0]?.total_count ?? 0;
+  const merchants = (data ?? []).map(({ total_count, ...rest }: any) => rest);
+
+  return NextResponse.json({
+    data: merchants,
+    pagination: { page, page_size: pageSize, total: Number(total), total_pages: Math.ceil(Number(total) / pageSize) },
+  });
+}
