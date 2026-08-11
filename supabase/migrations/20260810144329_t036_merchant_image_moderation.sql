@@ -5,8 +5,15 @@ alter table public.merchant_images
   add column if not exists deleted_at timestamptz;
 
 -- 2. status 字段由 text 转为 claim_request_status 枚举
+drop policy if exists merchant_images_select_public on public.merchant_images;
+drop trigger if exists trg_sync_merchant_images on public.merchant_images;
+drop trigger if exists trg_sync_merchant_images_array on public.merchant_images;
+
 alter table public.merchant_images
   alter column status drop default;
+
+alter table public.merchant_images
+  drop constraint if exists merchant_images_status_check;
 
 alter table public.merchant_images
   alter column status type claim_request_status
@@ -107,8 +114,8 @@ with check (
   uploaded_by = auth.uid()
   and (
     exists (select 1 from public.merchants m
-            where m.id = merchant_images.merchant_id
-              and m.owner_id = auth.uid() and m.status = 'claimed')
+        where m.id = merchant_images.merchant_id
+          and m.owner_id = auth.uid() and m.claim_status = 'claimed')
     or public.get_user_role(auth.uid()) in ('moderator','super_admin')
   )
 );
