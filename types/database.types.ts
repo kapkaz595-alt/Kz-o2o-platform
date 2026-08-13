@@ -39,6 +39,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_deleted: boolean
+          name: Json
+          parent_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: Json
+          parent_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: Json
+          parent_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_closure: {
+        Row: {
+          ancestor_id: string
+          depth: number
+          descendant_id: string
+        }
+        Insert: {
+          ancestor_id: string
+          depth: number
+          descendant_id: string
+        }
+        Update: {
+          ancestor_id?: string
+          depth?: number
+          descendant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_closure_ancestor_id_fkey"
+            columns: ["ancestor_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_closure_descendant_id_fkey"
+            columns: ["descendant_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string
@@ -75,54 +158,99 @@ export type Database = {
           },
         ]
       }
-      merchant_claim_requests: {
+      merchant_categories: {
         Row: {
-          bin_number: string | null
-          business_license_url: string | null
+          category_id: string
           created_at: string
           id: string
-          iin_number: string | null
+          is_primary: boolean
           merchant_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          merchant_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          merchant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_categories_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_claim_requests: {
+        Row: {
+          bin_iin: string
+          business_license_number: string | null
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_deleted: boolean
+          merchant_id: string
+          proof_files: string[]
           review_note: string | null
           reviewed_at: string | null
           reviewer_id: string | null
           status: Database["public"]["Enums"]["claim_request_status"]
+          submitted_by: string
           updated_at: string
-          user_id: string
-          whatsapp_verified: boolean
-          whatsapp_verified_at: string | null
         }
         Insert: {
-          bin_number?: string | null
-          business_license_url?: string | null
+          bin_iin: string
+          business_license_number?: string | null
+          contact_name: string
+          contact_phone: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
-          iin_number?: string | null
+          is_deleted?: boolean
           merchant_id: string
+          proof_files?: string[]
           review_note?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
           status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_by: string
           updated_at?: string
-          user_id: string
-          whatsapp_verified?: boolean
-          whatsapp_verified_at?: string | null
         }
         Update: {
-          bin_number?: string | null
-          business_license_url?: string | null
+          bin_iin?: string
+          business_license_number?: string | null
+          contact_name?: string
+          contact_phone?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
-          iin_number?: string | null
+          is_deleted?: boolean
           merchant_id?: string
+          proof_files?: string[]
           review_note?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
           status?: Database["public"]["Enums"]["claim_request_status"]
+          submitted_by?: string
           updated_at?: string
-          user_id?: string
-          whatsapp_verified?: boolean
-          whatsapp_verified_at?: string | null
         }
         Relationships: [
           {
@@ -140,8 +268,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "merchant_claim_requests_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "merchant_claim_requests_submitted_by_fkey"
+            columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -212,6 +340,121 @@ export type Database = {
           },
         ]
       }
+      merchant_images: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          display_order: number
+          id: string
+          is_deleted: boolean
+          merchant_id: string
+          status: Database["public"]["Enums"]["claim_request_status"]
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          display_order?: number
+          id?: string
+          is_deleted?: boolean
+          merchant_id: string
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          storage_path: string
+          updated_at?: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          display_order?: number
+          id?: string
+          is_deleted?: boolean
+          merchant_id?: string
+          status?: Database["public"]["Enums"]["claim_request_status"]
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_images_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_images_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_member_roles: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          invited_by: string | null
+          is_deleted: boolean
+          merchant_id: string
+          role: Database["public"]["Enums"]["merchant_member_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          invited_by?: string | null
+          is_deleted?: boolean
+          merchant_id: string
+          role?: Database["public"]["Enums"]["merchant_member_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          invited_by?: string | null
+          is_deleted?: boolean
+          merchant_id?: string
+          role?: Database["public"]["Enums"]["merchant_member_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_member_roles_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_member_roles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_member_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           address: Json
@@ -220,12 +463,15 @@ export type Database = {
           claim_status: Database["public"]["Enums"]["merchant_claim_status"]
           cover_image_url: string | null
           created_at: string
+          data_confidence_score: number | null
           deleted_at: string | null
           description: Json
           favorite_count: number
           featured: boolean
           id: string
+          images: string[]
           is_deleted: boolean
+          last_verified_at: string | null
           location: unknown
           name: Json
           owner_id: string | null
@@ -236,12 +482,19 @@ export type Database = {
           search_text: string | null
           search_vector: unknown
           slug: string
+          source_type: string | null
+          source_url: string | null
           target_audiences: string[]
           updated_at: string
+          verification_level: string | null
           view_count: number
           vip_expires_at: string | null
           vip_tier: string
           whatsapp_number: string | null
+          whatsapp_verification_method: string | null
+          whatsapp_verified: boolean
+          whatsapp_verified_at: string | null
+          whatsapp_verified_by: string | null
         }
         Insert: {
           address?: Json
@@ -250,12 +503,15 @@ export type Database = {
           claim_status?: Database["public"]["Enums"]["merchant_claim_status"]
           cover_image_url?: string | null
           created_at?: string
+          data_confidence_score?: number | null
           deleted_at?: string | null
           description?: Json
           favorite_count?: number
           featured?: boolean
           id?: string
+          images?: string[]
           is_deleted?: boolean
+          last_verified_at?: string | null
           location?: unknown
           name?: Json
           owner_id?: string | null
@@ -266,12 +522,19 @@ export type Database = {
           search_text?: string | null
           search_vector?: unknown
           slug: string
+          source_type?: string | null
+          source_url?: string | null
           target_audiences?: string[]
           updated_at?: string
+          verification_level?: string | null
           view_count?: number
           vip_expires_at?: string | null
           vip_tier?: string
           whatsapp_number?: string | null
+          whatsapp_verification_method?: string | null
+          whatsapp_verified?: boolean
+          whatsapp_verified_at?: string | null
+          whatsapp_verified_by?: string | null
         }
         Update: {
           address?: Json
@@ -280,12 +543,15 @@ export type Database = {
           claim_status?: Database["public"]["Enums"]["merchant_claim_status"]
           cover_image_url?: string | null
           created_at?: string
+          data_confidence_score?: number | null
           deleted_at?: string | null
           description?: Json
           favorite_count?: number
           featured?: boolean
           id?: string
+          images?: string[]
           is_deleted?: boolean
+          last_verified_at?: string | null
           location?: unknown
           name?: Json
           owner_id?: string | null
@@ -296,17 +562,31 @@ export type Database = {
           search_text?: string | null
           search_vector?: unknown
           slug?: string
+          source_type?: string | null
+          source_url?: string | null
           target_audiences?: string[]
           updated_at?: string
+          verification_level?: string | null
           view_count?: number
           vip_expires_at?: string | null
           vip_tier?: string
           whatsapp_number?: string | null
+          whatsapp_verification_method?: string | null
+          whatsapp_verified?: boolean
+          whatsapp_verified_at?: string | null
+          whatsapp_verified_by?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "merchants_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchants_whatsapp_verified_by_fkey"
+            columns: ["whatsapp_verified_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -751,6 +1031,24 @@ export type Database = {
             }
             Returns: string
           }
+      approve_claim_request:
+        | {
+            Args: {
+              p_claim_request_id: string
+              p_review_note?: string
+              p_reviewer_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_request_id: string
+              p_review_note?: string
+              p_reviewer_id: string
+              p_verify_whatsapp?: boolean
+            }
+            Returns: undefined
+          }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -905,10 +1203,50 @@ export type Database = {
           review_count: number
         }[]
       }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       gettransactionid: { Args: never; Returns: unknown }
+      increment_merchant_view_count: {
+        Args: { p_merchant_id: string }
+        Returns: undefined
+      }
       is_merchant_open: {
         Args: { p_business_hours: Json; p_check_time?: string }
         Returns: boolean
+      }
+      is_merchant_owner: {
+        Args: { p_merchant_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_valid_e164: { Args: { phone: string }; Returns: boolean }
+      list_merchants: {
+        Args: {
+          p_category?: string
+          p_keyword?: string
+          p_lat?: number
+          p_lng?: number
+          p_page?: number
+          p_page_size?: number
+          p_radius_meters?: number
+          p_target_audience?: string
+        }
+        Returns: {
+          address: Json
+          category: string
+          distance_meters: number
+          featured: boolean
+          id: string
+          name: Json
+          rating_avg: number
+          review_count: number
+          slug: string
+          target_audiences: string[]
+          total_count: number
+          vip_tier: string
+          whatsapp_number: string
+        }[]
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       populate_geometry_columns:
@@ -951,6 +1289,14 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      reject_claim_request: {
+        Args: {
+          p_claim_request_id: string
+          p_review_note: string
+          p_reviewer_id: string
+        }
+        Returns: Json
+      }
       search_merchants: {
         Args: {
           p_category?: string
@@ -1574,7 +1920,14 @@ export type Database = {
         | "claim_pending"
         | "claimed"
         | "claim_rejected"
-      user_role: "user" | "merchant_owner" | "moderator" | "super_admin"
+      merchant_member_role: "owner" | "editor" | "viewer"
+      user_role:
+        | "user"
+        | "merchant_owner"
+        | "moderator"
+        | "super_admin"
+        | "support"
+        | "finance"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -1720,7 +2073,15 @@ export const Constants = {
         "claimed",
         "claim_rejected",
       ],
-      user_role: ["user", "merchant_owner", "moderator", "super_admin"],
+      merchant_member_role: ["owner", "editor", "viewer"],
+      user_role: [
+        "user",
+        "merchant_owner",
+        "moderator",
+        "super_admin",
+        "support",
+        "finance",
+      ],
     },
   },
 } as const

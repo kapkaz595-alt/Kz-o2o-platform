@@ -10,7 +10,7 @@ const MAX_FILES = 5;
 
 export const POST = withAuth(async (req: NextRequest, { params, user }) => {
   const { slug } = params as { slug: string };
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // 1. 查商家，校验可认领状态
   const { data: merchant, error: merchantErr } = await supabase
@@ -38,6 +38,16 @@ export const POST = withAuth(async (req: NextRequest, { params, user }) => {
   const contactPhone = formData.get('contact_phone')?.toString().trim();
   const businessLicenseNumber = formData.get('business_license_number')?.toString().trim() || null;
   const files = formData.getAll('files') as File[];
+
+  const whatsappNumber = formData.get('whatsapp_number')?.toString().trim();
+
+const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+if (!whatsappNumber || !E164_REGEX.test(whatsappNumber)) {
+  return NextResponse.json(
+    { error: 'WhatsApp号码格式不正确，需为E.164格式，例如 +77011234567' },
+    { status: 400 }
+  );
+}
 
   if (!binIin || !contactName || !contactPhone) {
     return NextResponse.json(

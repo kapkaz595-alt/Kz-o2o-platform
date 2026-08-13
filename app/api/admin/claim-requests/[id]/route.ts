@@ -9,7 +9,7 @@ export const PATCH = withAuth(async (req: NextRequest, { user, params }) => {
   const supabase = await createClient();
   const { id } = params as { id: string };
   const body = await req.json();
-  const { action, review_note } = body;
+  const { action, review_note, verify_whatsapp } = body;
 
   if (!['approve', 'reject'].includes(action)) {
     return NextResponse.json(
@@ -25,14 +25,21 @@ export const PATCH = withAuth(async (req: NextRequest, { user, params }) => {
     );
   }
 
-  const rpcArgs = {
-    p_claim_request_id: id,
-    p_reviewer_id: user.id,
-    p_review_note: review_note || null,
-  };
+  const rpcArgs =
+  action === 'approve'
+    ? {
+        p_request_id: id,
+        p_reviewer_id: user.id,
+        p_review_note: review_note || null,
+        p_verify_whatsapp: verify_whatsapp === true,
+      }
+    : {
+        p_request_id: id,
+        p_reviewer_id: user.id,
+        p_review_note: review_note || null,
+      };
 
-  const rpcFn = action === 'approve' ? 'approve_claim_request' : 'reject_claim_request';
-
+const rpcFn = action === 'approve' ? 'approve_claim_request' : 'reject_claim_request';
   const { data, error } = await (supabase.rpc as any)(rpcFn, rpcArgs);
 
   if (error) {
