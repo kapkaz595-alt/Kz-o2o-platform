@@ -9,7 +9,7 @@ const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'
 const MAX_FILES = 5;
 
 export const POST = withAuth(async (req: NextRequest, { params, user }) => {
-  const { slug } = params as { slug: string };
+ const { slug } = await (params as Promise<{ slug: string }>);
   const supabase = await createClient();
 
   // 1. 查商家，校验可认领状态

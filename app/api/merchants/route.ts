@@ -112,7 +112,7 @@ if (!slug) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const page = parseInt(searchParams.get('page') ?? '1', 10);
   const pageSize = Math.min(parseInt(searchParams.get('page_size') ?? '20', 10), 50);
