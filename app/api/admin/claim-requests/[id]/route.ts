@@ -7,7 +7,7 @@ export const PATCH = withAuth(async (req: NextRequest, { user, params }) => {
   if (!roleCheck.ok) return roleCheck.response;
 
   const supabase = await createClient();
-  const { id } = params as { id: string };
+  const { id } = await (params as Promise<{ id: string }>);
   const body = await req.json();
   const { action, review_note, verify_whatsapp } = body;
 

@@ -37,7 +37,7 @@ export const POST = withAuth(async (req: NextRequest, { params, user }) => {
   const contactName = formData.get('contact_name')?.toString().trim();
   const contactPhone = formData.get('contact_phone')?.toString().trim();
   const businessLicenseNumber = formData.get('business_license_number')?.toString().trim() || null;
-  const files = formData.getAll('files') as File[];
+  const files = formData.getAll('proof_files') as File[];
 
   const whatsappNumber = formData.get('whatsapp_number')?.toString().trim();
 
