@@ -1,3 +1,5 @@
+drop table if exists reviews cascade;
+
 create table reviews (
   id uuid primary key default gen_random_uuid(),
   merchant_id uuid not null references merchants(id),
@@ -59,8 +61,17 @@ $function$;
 create trigger trg_snapshot_review_revision
   before update on reviews for each row execute function snapshot_review_revision();
 
+create or replace function public.enqueue_review_moderation()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.moderation_queue (target_type, target_id, source, status)
+  values ('review', new.id, 'user_submission', 'pending');
+  return new;
+end;
+$$;
+
 create trigger trg_reviews_to_moderation
-  after insert on reviews for each row execute function enqueue_moderation('review');
+  after insert on reviews for each row execute function enqueue_review_moderation();
 
   create or replace function public.sync_moderation_result_to_image()
 returns trigger language plpgsql security definer set search_path = public as $$

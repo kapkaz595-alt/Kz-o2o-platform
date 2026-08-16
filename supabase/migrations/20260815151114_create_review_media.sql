@@ -15,5 +15,14 @@ create index idx_review_media_status on review_media(status);
 
 create trigger trg_review_media_updated_at
   before update on review_media for each row execute function set_updated_at();
+create or replace function public.enqueue_review_media_moderation()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.moderation_queue (target_type, target_id, source, status)
+  values ('review_media', new.id, 'user_submission', 'pending');
+  return new;
+end;
+$$;
+
 create trigger trg_review_media_to_moderation
-  after insert on review_media for each row execute function enqueue_moderation('review_media');
+  after insert on review_media for each row execute function enqueue_review_media_moderation();
