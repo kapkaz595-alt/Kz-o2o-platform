@@ -1,42 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { withAuth, requireRole } from '@/lib/supabase/auth-middleware';
+import { moderationHandlers, VALID_ACTIONS } from '@/lib/moderation/handlers';
 
-export const PATCH = withAuth(async (req: NextRequest, ctx) => {
-  const check = await requireRole(ctx.user, ['moderator', 'super_admin']);
-  if (!check.ok) return check.response;
-
-  const { id } = ctx.params as { id: string };
-  const body = await req.json();
-  const { status, resolution_note } = body as {
-    status: 'approved' | 'rejected';
-    resolution_note?: string;
-  };
-
-  if (!['approved', 'rejected'].includes(status)) {
-    return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-  }
-
+export const PATCH = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  requireRole(req, ['moderator', 'super_admin']);
+  const { id } = await params;
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const body = await req.json();
+  const { action, review_note } = body;
+
+  const { data: item, error: itemErr } = await supabase
     .from('moderation_queue')
-    .update({
-      status,
-      resolution_note: resolution_note ?? null,
-      assigned_to: ctx.user.id,
-      resolved_at: new Date().toISOString(),
-    })
+    .select('*')
     .eq('id', id)
-    .eq('status', 'pending')
-    .select()
     .single();
 
-  if (error || !data) {
-    return NextResponse.json(
-      { error: error?.message ?? 'Not found or already resolved' },
-      { status: 404 }
-    );
+  if (itemErr || !item) {
+    return NextResponse.json({ error: '审核项不存在' }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  const validActions = VALID_ACTIONS[item.target_type];
+  if (!validActions) {
+    return NextResponse.json({ error: `未支持的target_type: ${item.target_type}` }, { status: 400 });
+  }
+  if (!validActions.includes(action)) {
+    return NextResponse.json({ error: `该类型action须为${validActions.join('或')}` }, { status: 400 });
+  }
+
+  try {
+    await moderationHandlers[item.target_type](action, {
+      supabase,
+      targetId: item.target_id,
+      reviewerId: user!.id,
+      reviewNote: review_note,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+
+  const { error: queueErr } = await supabase
+    .from('moderation_queue')
+    .update({ status: 'processed', processed_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (queueErr) return NextResponse.json({ error: queueErr.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
 });
